@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SCMS — Smart Campus Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #06090f;
+    --surface: #0d1220;
+    --surface2: #131929;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --accent: #00e5a0;
+    --accent2: #0080ff;
+    --accent3: #ff6b35;
+    --text: #e8edf5;
+    --muted: #6b7a99;
+    --muted2: #9aaabe;
+    --danger: #ff4757;
+    --warn: #ffa502;
+    --font: 'Space Grotesk', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height:100vh; overflow-x:hidden; }
+ 
+  /* ── GRID NOISE TEXTURE ── */
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+ 
+  /* ──────────── LOGIN PAGE ──────────── */
+  #login-page {
+    position: fixed; inset:0; z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--bg);
+  }
+  .login-glow {
+    position:absolute; width:500px; height:500px; border-radius:50%;
+    background: radial-gradient(circle, rgba(0,229,160,0.08) 0%, transparent 70%);
+    top:50%; left:50%; transform:translate(-50%,-50%);
+    pointer-events:none;
+  }
+  .login-box {
+    position:relative; z-index:2;
+    width: 420px;
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: 20px;
+    padding: 2.5rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .login-logo {
+    display:flex; align-items:center; gap:10px; margin-bottom:2rem;
+  }
+  .login-logo-icon {
+    width:40px; height:40px; border-radius:10px;
+    background: linear-gradient(135deg, rgba(0,229,160,0.2), rgba(0,128,255,0.2));
+    border: 1px solid rgba(0,229,160,0.3);
+    display:flex; align-items:center; justify-content:center;
+    font-size:18px;
+  }
+  .login-logo-text { font-size:14px; font-weight:600; color:var(--text); letter-spacing:0.05em; }
+  .login-logo-sub { font-size:11px; color:var(--muted); font-family:var(--mono); }
+  .login-title { font-size:24px; font-weight:700; margin-bottom:0.3rem; }
+  .login-sub { font-size:13px; color:var(--muted); margin-bottom:2rem; }
+ 
+  .role-tabs { display:flex; gap:8px; margin-bottom:1.5rem; }
+  .role-tab {
+    flex:1; padding:8px; border-radius:8px; font-size:12px; font-weight:500;
+    border: 0.5px solid var(--border);
+    background: transparent; color: var(--muted); cursor:pointer; transition:all 0.2s;
+    font-family: var(--font);
+  }
+  .role-tab.active {
+    background: rgba(0,229,160,0.1);
+    border-color: rgba(0,229,160,0.4);
+    color: var(--accent);
+  }
+ 
+  .form-group { margin-bottom:1.2rem; }
+  .form-label { font-size:12px; color:var(--muted); margin-bottom:6px; display:block; font-family:var(--mono); letter-spacing:0.04em; }
+  .form-input {
+    width:100%; padding:12px 14px; border-radius:10px;
+    background: var(--surface2); border: 0.5px solid var(--border2);
+    color: var(--text); font-family:var(--font); font-size:14px; outline:none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .form-input:focus { border-color: rgba(0,229,160,0.5); box-shadow: 0 0 0 3px rgba(0,229,160,0.08); }
+  .form-input::placeholder { color:var(--muted); }
+ 
+  .login-btn {
+    width:100%; padding:13px; border-radius:10px; margin-top:0.5rem;
+    background: var(--accent); border:none; color:#06090f;
+    font-family:var(--font); font-size:14px; font-weight:700;
+    cursor:pointer; transition:all 0.2s; letter-spacing:0.03em;
+  }
+  .login-btn:hover { background:#00ffb3; transform:translateY(-1px); }
+  .login-btn:active { transform:translateY(0); }
+ 
+  .login-footer { margin-top:1.5rem; text-align:center; font-size:12px; color:var(--muted); }
+  .status-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--accent); margin-right:6px; animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+ 
+  /* ──────────── DASHBOARD ──────────── */
+  #dashboard-page { display:none; min-height:100vh; }
+ 
+  /* SIDEBAR */
+  .sidebar {
+    position:fixed; left:0; top:0; bottom:0; width:240px;
+    background:var(--surface); border-right:0.5px solid var(--border);
+    display:flex; flex-direction:column; z-index:50;
+    padding: 1.5rem 0;
+  }
+  .sidebar-logo {
+    display:flex; align-items:center; gap:10px;
+    padding: 0 1.5rem 1.5rem;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .sidebar-logo-icon {
+    width:34px; height:34px; border-radius:8px;
+    background: linear-gradient(135deg, rgba(0,229,160,0.2), rgba(0,128,255,0.2));
+    border: 1px solid rgba(0,229,160,0.3);
+    display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;
+  }
+  .sidebar-logo-label { font-size:13px; font-weight:700; color:var(--text); }
+  .sidebar-logo-sub { font-size:10px; color:var(--muted); font-family:var(--mono); }
+ 
+  .nav-section { padding: 1.2rem 1rem 0.5rem; }
+  .nav-section-label { font-size:10px; color:var(--muted); font-family:var(--mono); letter-spacing:0.1em; text-transform:uppercase; padding: 0 0.5rem 0.6rem; }
+  .nav-item {
+    display:flex; align-items:center; gap:10px;
+    padding: 9px 12px; border-radius:8px; margin-bottom:2px;
+    color:var(--muted2); font-size:13px; font-weight:500;
+    cursor:pointer; transition:all 0.15s; text-decoration:none;
+  }
+  .nav-item:hover { background:rgba(255,255,255,0.04); color:var(--text); }
+  .nav-item.active { background:rgba(0,229,160,0.1); color:var(--accent); }
+  .nav-icon { font-size:15px; width:20px; text-align:center; }
+  .nav-badge { margin-left:auto; background:rgba(0,229,160,0.15); color:var(--accent); font-size:10px; font-family:var(--mono); padding:2px 7px; border-radius:20px; }
+ 
+  .sidebar-bottom { margin-top:auto; padding:1rem 1rem 0; border-top:0.5px solid var(--border); }
+  .user-card {
+    display:flex; align-items:center; gap:10px; padding:10px;
+    background:var(--surface2); border-radius:10px; margin-bottom:10px;
+  }
+  .user-avatar {
+    width:34px; height:34px; border-radius:50%;
+    background: linear-gradient(135deg, #00e5a0, #0080ff);
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; color:#06090f; flex-shrink:0;
+  }
+  .user-name { font-size:13px; font-weight:600; color:var(--text); }
+  .user-role { font-size:10px; color:var(--muted); font-family:var(--mono); }
+  .logout-btn {
+    width:100%; padding:9px; border-radius:8px; font-size:13px; font-weight:500;
+    background:rgba(255,71,87,0.08); border:0.5px solid rgba(255,71,87,0.2);
+    color:var(--danger); cursor:pointer; font-family:var(--font); transition:all 0.2s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  .logout-btn:hover { background:rgba(255,71,87,0.15); border-color:rgba(255,71,87,0.4); }
+ 
+  /* MAIN CONTENT */
+  .main {
+    margin-left:240px; min-height:100vh; padding:2rem;
+  }
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:2rem;
+  }
+  .topbar-title { font-size:22px; font-weight:700; }
+  .topbar-sub { font-size:13px; color:var(--muted); margin-top:2px; }
+  .topbar-right { display:flex; align-items:center; gap:12px; }
+  .topbar-time {
+    font-family:var(--mono); font-size:13px; color:var(--muted);
+    background:var(--surface); border:0.5px solid var(--border); border-radius:8px; padding:7px 12px;
+  }
+  .alert-btn {
+    position:relative; width:36px; height:36px; border-radius:8px;
+    background:var(--surface); border:0.5px solid var(--border);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px;
+  }
+  .alert-dot { position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%; background:var(--danger); border:2px solid var(--bg); }
+ 
+  /* STAT CARDS */
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:1.5rem; }
+  .stat-card {
+    background:var(--surface); border:0.5px solid var(--border);
+    border-radius:14px; padding:1.25rem; position:relative; overflow:hidden;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color:var(--border2); }
+  .stat-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:2px;
+    border-radius:14px 14px 0 0;
+  }
+  .stat-card.green::before { background: linear-gradient(90deg, var(--accent), transparent); }
+  .stat-card.blue::before { background: linear-gradient(90deg, var(--accent2), transparent); }
+  .stat-card.orange::before { background: linear-gradient(90deg, var(--accent3), transparent); }
+  .stat-card.yellow::before { background: linear-gradient(90deg, var(--warn), transparent); }
+  .stat-label { font-size:11px; color:var(--muted); font-family:var(--mono); letter-spacing:0.05em; margin-bottom:0.6rem; }
+  .stat-value { font-size:28px; font-weight:700; line-height:1; margin-bottom:0.4rem; }
+  .stat-card.green .stat-value { color:var(--accent); }
+  .stat-card.blue .stat-value { color:var(--accent2); }
+  .stat-card.orange .stat-value { color:var(--accent3); }
+  .stat-card.yellow .stat-value { color:var(--warn); }
+  .stat-change { font-size:12px; display:flex; align-items:center; gap:4px; }
+  .stat-change.up { color:#00e5a0; }
+  .stat-change.down { color:var(--danger); }
+  .stat-icon { position:absolute; right:1rem; top:1rem; font-size:22px; opacity:0.2; }
+ 
+  /* CONTENT GRID */
+  .content-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:1.5rem; }
+  .content-grid-3 { display:grid; grid-template-columns:2fr 1fr; gap:16px; margin-bottom:1.5rem; }
+ 
+  .card {
+    background:var(--surface); border:0.5px solid var(--border);
+    border-radius:14px; padding:1.25rem; overflow:hidden;
+  }
+  .card-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.2rem; }
+  .card-title { font-size:14px; font-weight:600; }
+  .card-action { font-size:12px; color:var(--accent); cursor:pointer; font-family:var(--mono); }
+ 
+  /* MODULE STATUS */
+  .module-list { display:flex; flex-direction:column; gap:10px; }
+  .module-item {
+    display:flex; align-items:center; gap:12px; padding:10px;
+    background:var(--surface2); border-radius:10px;
+  }
+  .module-icon { font-size:18px; width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+  .module-icon.green { background:rgba(0,229,160,0.1); }
+  .module-icon.blue { background:rgba(0,128,255,0.1); }
+  .module-icon.orange { background:rgba(255,107,53,0.1); }
+  .module-icon.yellow { background:rgba(255,165,2,0.1); }
+  .module-name { font-size:13px; font-weight:500; flex:1; }
+  .module-status { font-size:11px; font-family:var(--mono); padding:3px 9px; border-radius:20px; }
+  .module-status.online { background:rgba(0,229,160,0.12); color:var(--accent); }
+  .module-status.alert { background:rgba(255,165,2,0.12); color:var(--warn); }
+  .module-status.offline { background:rgba(255,71,87,0.12); color:var(--danger); }
+ 
+  /* ENERGY CHART */
+  .energy-bars { display:flex; align-items:flex-end; gap:8px; height:80px; margin-top:1rem; }
+  .energy-bar { flex:1; border-radius:4px 4px 0 0; transition:all 0.5s ease; position:relative; cursor:pointer; }
+  .energy-bar:hover { filter:brightness(1.3); }
+  .energy-bar.renewable { background:rgba(0,229,160,0.6); }
+  .energy-bar.conventional { background:rgba(0,128,255,0.4); }
+  .energy-label { font-size:10px; color:var(--muted); text-align:center; margin-top:4px; font-family:var(--mono); }
+  .energy-legend { display:flex; gap:16px; margin-top:12px; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+  .legend-dot { width:8px; height:8px; border-radius:2px; }
+ 
+  /* ATTENDANCE TABLE */
+  .att-table { width:100%; border-collapse:collapse; }
+  .att-table th { font-size:10px; color:var(--muted); font-family:var(--mono); text-align:left; padding:0 10px 8px; letter-spacing:0.05em; }
+  .att-table td { font-size:13px; padding:8px 10px; border-top:0.5px solid var(--border); }
+  .att-table tr:hover td { background:rgba(255,255,255,0.02); }
+  .att-pct { font-family:var(--mono); font-size:12px; font-weight:500; }
+  .att-bar-wrap { width:80px; height:4px; background:rgba(255,255,255,0.06); border-radius:4px; }
+  .att-bar { height:4px; border-radius:4px; background:var(--accent); }
+  .att-bar.warn { background:var(--warn); }
+  .att-bar.danger { background:var(--danger); }
+ 
+  /* ALERTS */
+  .alert-list { display:flex; flex-direction:column; gap:8px; }
+  .alert-item {
+    display:flex; align-items:flex-start; gap:10px; padding:10px;
+    background:var(--surface2); border-radius:10px; border-left:2px solid transparent;
+  }
+  .alert-item.danger { border-left-color:var(--danger); }
+  .alert-item.warn { border-left-color:var(--warn); }
+  .alert-item.info { border-left-color:var(--accent); }
+  .alert-dot2 { width:7px; height:7px; border-radius:50%; margin-top:4px; flex-shrink:0; }
+  .alert-dot2.danger { background:var(--danger); }
+  .alert-dot2.warn { background:var(--warn); }
+  .alert-dot2.info { background:var(--accent); }
+  .alert-text { font-size:12px; color:var(--text); line-height:1.5; }
+  .alert-time { font-size:10px; color:var(--muted); margin-top:2px; font-family:var(--mono); }
+ 
+  /* PARKING */
+  .parking-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:0.5rem; }
+  .parking-slot {
+    height:32px; border-radius:6px; border:0.5px solid;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-family:var(--mono); font-weight:500; cursor:pointer; transition:all 0.15s;
+  }
+  .parking-slot.empty { background:rgba(0,229,160,0.08); border-color:rgba(0,229,160,0.2); color:var(--accent); }
+  .parking-slot.occupied { background:rgba(255,71,87,0.08); border-color:rgba(255,71,87,0.2); color:var(--danger); }
+  .parking-slot.reserved { background:rgba(255,165,2,0.08); border-color:rgba(255,165,2,0.2); color:var(--warn); }
+  .parking-legend { display:flex; gap:12px; margin-top:10px; flex-wrap:wrap; }
+ 
+  /* MON CENTERS */
+  .mon-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .mon-card {
+    background:var(--surface2); border-radius:10px; padding:12px;
+    border:0.5px solid var(--border);
+  }
+  .mon-title { font-size:12px; font-weight:600; margin-bottom:6px; }
+  .mon-row { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); padding:3px 0; border-bottom:0.5px solid var(--border); }
+  .mon-row:last-child { border-bottom:none; }
+  .mon-val { color:var(--text); font-family:var(--mono); }
+ 
+  /* LOGOUT MODAL */
+  #logout-modal {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(6,9,15,0.85); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center;
+  }
+  #logout-modal.show { display:flex; }
+  .modal-box {
+    background:var(--surface); border:0.5px solid var(--border2);
+    border-radius:20px; padding:2.5rem; width:380px; text-align:center;
+    animation:fadeUp 0.3s ease;
+  }
+  .modal-icon { font-size:40px; margin-bottom:1rem; }
+  .modal-title { font-size:20px; font-weight:700; margin-bottom:0.5rem; }
+  .modal-sub { font-size:14px; color:var(--muted); margin-bottom:1.8rem; line-height:1.6; }
+  .modal-btns { display:flex; gap:10px; }
+  .modal-cancel {
+    flex:1; padding:12px; border-radius:10px; background:var(--surface2);
+    border:0.5px solid var(--border2); color:var(--text); font-size:14px;
+    font-family:var(--font); cursor:pointer; font-weight:500; transition:all 0.2s;
+  }
+  .modal-cancel:hover { border-color:var(--border); }
+  .modal-confirm {
+    flex:1; padding:12px; border-radius:10px; background:rgba(255,71,87,0.1);
+    border:0.5px solid rgba(255,71,87,0.3); color:var(--danger); font-size:14px;
+    font-family:var(--font); font-weight:700; cursor:pointer; transition:all 0.2s;
+  }
+  .modal-confirm:hover { background:rgba(255,71,87,0.2); }
+ 
+  /* TOAST */
+  #toast {
+    position:fixed; bottom:2rem; right:2rem; z-index:300;
+    background:var(--surface); border:0.5px solid rgba(0,229,160,0.3);
+    border-radius:12px; padding:14px 20px; display:flex; align-items:center; gap:12px;
+    font-size:13px; color:var(--text); transform:translateY(100px); opacity:0;
+    transition:all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  #toast.show { transform:translateY(0); opacity:1; }
+ 
+  .section-divider { font-size:11px; color:var(--muted); font-family:var(--mono); letter-spacing:0.1em; text-transform:uppercase; margin:0 0 1rem; padding-bottom:8px; border-bottom:0.5px solid var(--border); }
+ 
+  @keyframes countUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .animate-in { animation: countUp 0.5s ease both; }
+ 
+  .pill {
+    display:inline-flex; align-items:center; gap:5px; padding:4px 10px;
+    border-radius:20px; font-size:11px; font-family:var(--mono); font-weight:500;
+  }
+  .pill.green { background:rgba(0,229,160,0.1); color:var(--accent); border:0.5px solid rgba(0,229,160,0.2); }
+  .pill.blue { background:rgba(0,128,255,0.1); color:var(--accent2); border:0.5px solid rgba(0,128,255,0.2); }
+</style>
+</head>
+<body>
+ 
+<!-- ══════════ LOGIN PAGE ══════════ -->
+<div id="login-page">
+  <div class="login-glow"></div>
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">🏛️</div>
+      <div>
+        <div class="login-logo-text">SCMS</div>
+        <div class="login-logo-sub">Smart Campus Management System</div>
+      </div>
+    </div>
+ 
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="setRole(this,'Admin')">Admin</button>
+      <button class="role-tab" onclick="setRole(this,'Teacher')">Teacher</button>
+      <button class="role-tab" onclick="setRole(this,'Student')">Student</button>
+      <button class="role-tab" onclick="setRole(this,'Parent')">Parent</button>
+    </div>
+ 
+    <h2 class="login-title">Welcome back</h2>
+    <p class="login-sub">Sign in to access your campus dashboard</p>
+ 
+    <div class="form-group">
+      <label class="form-label">CAMPUS ID / EMAIL</label>
+      <input class="form-input" type="text" placeholder="e.g. admin@mmmut.ac.in" id="login-email"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">PASSWORD</label>
+      <input class="form-input" type="password" placeholder="••••••••" id="login-pass"/>
+    </div>
+ 
+    <button class="login-btn" onclick="doLogin()">Sign In to Campus</button>
+ 
+    <div class="login-footer">
+      <span class="status-dot"></span>
+      All campus systems operational &nbsp;·&nbsp; IoT Network: 98.4% uptime
+    </div>
+  </div>
+</div>
+ 
+<!-- ══════════ LOGOUT MODAL ══════════ -->
+<div id="logout-modal">
+  <div class="modal-box">
+    <div class="modal-icon">🔐</div>
+    <div class="modal-title">Sign out?</div>
+    <div class="modal-sub">You'll be signed out of the Smart Campus Management System. All active sessions will be terminated.</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeLogout()">Stay signed in</button>
+      <button class="modal-confirm" onclick="confirmLogout()">Sign out</button>
+    </div>
+  </div>
+</div>
+ 
+<!-- ══════════ TOAST ══════════ -->
+<div id="toast">✅ &nbsp; Signed in successfully</div>
+ 
+<!-- ══════════ DASHBOARD PAGE ══════════ -->
+<div id="dashboard-page">
+ 
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-icon">🏛️</div>
+      <div>
+        <div class="sidebar-logo-label">SCMS</div>
+        <div class="sidebar-logo-sub">v2.4.1 · IoT Active</div>
+      </div>
+    </div>
+ 
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active"><span class="nav-icon">⬛</span> Dashboard</div>
+      <div class="nav-item"><span class="nav-icon">📊</span> Analytics</div>
+      <div class="nav-item"><span class="nav-icon">🔔</span> Alerts <span class="nav-badge">3</span></div>
+    </div>
+ 
+    <div class="nav-section">
+      <div class="nav-section-label">LMS</div>
+      <div class="nav-item"><span class="nav-icon">📚</span> e-Learning</div>
+      <div class="nav-item"><span class="nav-icon">✅</span> Attendance</div>
+      <div class="nav-item"><span class="nav-icon">📝</span> Grades & Eval</div>
+      <div class="nav-item"><span class="nav-icon">💬</span> Feedback</div>
+      <div class="nav-item"><span class="nav-icon">☁️</span> Cloud Storage</div>
+    </div>
+ 
+    <div class="nav-section">
+      <div class="nav-section-label">Campus IoT</div>
+      <div class="nav-item"><span class="nav-icon">⚡</span> Energy & AMI</div>
+      <div class="nav-item"><span class="nav-icon">🅿️</span> Smart Parking</div>
+      <div class="nav-item"><span class="nav-icon">🔒</span> Security</div>
+      <div class="nav-item"><span class="nav-icon">♻️</span> Renewable</div>
+    </div>
+ 
+    <div class="sidebar-bottom">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar">AD</div>
+        <div>
+          <div class="user-name" id="user-name">Admin User</div>
+          <div class="user-role" id="user-role">admin · SCMS</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="openLogout()">⏏ &nbsp; Sign Out</button>
+    </div>
+  </nav>
+ 
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Campus Overview</div>
+        <div class="topbar-sub">Madan Mohan Malaviya University of Technology · IoT Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <span class="pill green">● Live</span>
+        <div class="topbar-time" id="clock">--:--:--</div>
+        <div class="alert-btn">🔔<div class="alert-dot"></div></div>
+      </div>
+    </div>
+ 
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card green animate-in" style="animation-delay:0.05s">
+        <div class="stat-label">ACTIVE STUDENTS</div>
+        <div class="stat-value">1,284</div>
+        <div class="stat-change up">▲ 4.2% this week</div>
+        <div class="stat-icon">👨‍🎓</div>
+      </div>
+      <div class="stat-card blue animate-in" style="animation-delay:0.1s">
+        <div class="stat-label">ENERGY SAVED TODAY</div>
+        <div class="stat-value">38.4<span style="font-size:16px;font-weight:400"> kWh</span></div>
+        <div class="stat-change up">▲ PIR + LDR sensors active</div>
+        <div class="stat-icon">⚡</div>
+      </div>
+      <div class="stat-card orange animate-in" style="animation-delay:0.15s">
+        <div class="stat-label">PARKING OCCUPIED</div>
+        <div class="stat-value">67<span style="font-size:16px;font-weight:400">%</span></div>
+        <div class="stat-change down">▼ 14 slots available</div>
+        <div class="stat-icon">🅿️</div>
+      </div>
+      <div class="stat-card yellow animate-in" style="animation-delay:0.2s">
+        <div class="stat-label">ALERTS PENDING</div>
+        <div class="stat-value">3</div>
+        <div class="stat-change down">▼ 2 handled by AI</div>
+        <div class="stat-icon">🔔</div>
+      </div>
+    </div>
+ 
+    <!-- ROW 2 -->
+    <div class="content-grid">
+ 
+      <!-- MODULE STATUS -->
+      <div class="card animate-in" style="animation-delay:0.25s">
+        <div class="card-header">
+          <div class="card-title">Campus Module Status</div>
+          <span class="card-action">View all →</span>
+        </div>
+        <div class="module-list">
+          <div class="module-item">
+            <div class="module-icon green">📡</div>
+            <div>
+              <div class="module-name">Smart Campus Mgmt System (SCMS)</div>
+              <div style="font-size:11px;color:var(--muted)">Central hub · AI-managed alerts</div>
+            </div>
+            <div class="module-status online">ONLINE</div>
+          </div>
+          <div class="module-item">
+            <div class="module-icon blue">🏫</div>
+            <div>
+              <div class="module-name">Learning Management System</div>
+              <div style="font-size:11px;color:var(--muted)">e-Learning · Attendance · Grades</div>
+            </div>
+            <div class="module-status online">ONLINE</div>
+          </div>
+          <div class="module-item">
+            <div class="module-icon green">⚡</div>
+            <div>
+              <div class="module-name">Renewable + AMI Integration</div>
+              <div style="font-size:11px;color:var(--muted)">Solar PV · Smart meters active</div>
+            </div>
+            <div class="module-status online">ONLINE</div>
+          </div>
+          <div class="module-item">
+            <div class="module-icon yellow">🅿️</div>
+            <div>
+              <div class="module-name">Smart Parking (MQTT)</div>
+              <div style="font-size:11px;color:var(--muted)">Ultrasonic sensors · 21 slots</div>
+            </div>
+            <div class="module-status alert">ALERT</div>
+          </div>
+          <div class="module-item">
+            <div class="module-icon orange">🔒</div>
+            <div>
+              <div class="module-name">Gate Security + Anti-theft</div>
+              <div style="font-size:11px;color:var(--muted)">Raspberry Pi · PIR + Camera</div>
+            </div>
+            <div class="module-status online">ONLINE</div>
+          </div>
+        </div>
+      </div>
+ 
+      <!-- ALERTS -->
+      <div class="card animate-in" style="animation-delay:0.3s">
+        <div class="card-header">
+          <div class="card-title">System Alerts</div>
+          <span class="card-action">Clear all</span>
+        </div>
+        <div class="alert-list">
+          <div class="alert-item danger">
+            <div class="alert-dot2 danger"></div>
+            <div>
+              <div class="alert-text">Parking Slot S7 sensor failure detected. Ultrasonic sensor offline.</div>
+              <div class="alert-time">2 min ago · MON2 · Auto-escalated to operator</div>
+            </div>
+          </div>
+          <div class="alert-item warn">
+            <div class="alert-dot2 warn"></div>
+            <div>
+              <div class="alert-text">Lab 3 energy usage 18% above threshold. Possible AC override.</div>
+              <div class="alert-time">14 min ago · AMI-Lab3 · AI monitoring</div>
+            </div>
+          </div>
+          <div class="alert-item info">
+            <div class="alert-dot2 info"></div>
+            <div>
+              <div class="alert-text">Cloud storage usage at 82%. 3 students uploaded large video files.</div>
+              <div class="alert-time">1 hr ago · LMS Cloud Drive · Resolved by AI</div>
+            </div>
+          </div>
+          <div class="alert-item warn">
+            <div class="alert-dot2 warn"></div>
+            <div>
+              <div class="alert-text">Main gate: motion detected in restricted zone B at 02:14 AM.</div>
+              <div class="alert-time">6 hrs ago · Gate Security · Reviewed ✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- ROW 3 -->
+    <div class="content-grid-3">
+ 
+      <!-- ATTENDANCE TABLE -->
+      <div class="card animate-in" style="animation-delay:0.35s">
+        <div class="card-header">
+          <div class="card-title">LMS — Today's Attendance (Biometric)</div>
+          <span class="pill blue">Fingerprint Auth</span>
+        </div>
+        <table class="att-table">
+          <thead>
+            <tr>
+              <th>CLASS</th>
+              <th>DEPT</th>
+              <th>PRESENT</th>
+              <th>RATE</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CS-3A</td><td style="color:var(--muted);font-size:12px">CSE</td>
+              <td><span class="att-pct" style="color:var(--accent)">52/58</span></td>
+              <td>
+                <div class="att-bar-wrap"><div class="att-bar" style="width:89%"></div></div>
+              </td>
+              <td style="color:var(--muted);font-size:11px;font-family:var(--mono)">89%</td>
+            </tr>
+            <tr>
+              <td>EE-2B</td><td style="color:var(--muted);font-size:12px">EEE</td>
+              <td><span class="att-pct" style="color:var(--accent)">44/60</span></td>
+              <td>
+                <div class="att-bar-wrap"><div class="att-bar warn" style="width:73%"></div></div>
+              </td>
+              <td style="color:var(--warn);font-size:11px;font-family:var(--mono)">73%</td>
+            </tr>
+            <tr>
+              <td>EC-4C</td><td style="color:var(--muted);font-size:12px">ECE</td>
+              <td><span class="att-pct" style="color:var(--accent)">57/60</span></td>
+              <td>
+                <div class="att-bar-wrap"><div class="att-bar" style="width:95%"></div></div>
+              </td>
+              <td style="color:var(--accent);font-size:11px;font-family:var(--mono)">95%</td>
+            </tr>
+            <tr>
+              <td>ME-1A</td><td style="color:var(--muted);font-size:12px">MECH</td>
+              <td><span class="att-pct" style="color:var(--danger)">31/55</span></td>
+              <td>
+                <div class="att-bar-wrap"><div class="att-bar danger" style="width:56%"></div></div>
+              </td>
+              <td style="color:var(--danger);font-size:11px;font-family:var(--mono)">56%</td>
+            </tr>
+            <tr>
+              <td>CE-3B</td><td style="color:var(--muted);font-size:12px">CIVIL</td>
+              <td><span class="att-pct" style="color:var(--accent)">49/52</span></td>
+              <td>
+                <div class="att-bar-wrap"><div class="att-bar" style="width:94%"></div></div>
+              </td>
+              <td style="color:var(--accent);font-size:11px;font-family:var(--mono)">94%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+ 
+      <!-- ENERGY -->
+      <div class="card animate-in" style="animation-delay:0.4s">
+        <div class="card-header">
+          <div class="card-title">Energy — Hourly (kWh)</div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:0.5rem;">Today's generation vs consumption</div>
+        <div class="energy-bars" id="energy-bars"></div>
+        <div id="energy-labels" style="display:flex;gap:8px;margin-top:4px;"></div>
+        <div class="energy-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(0,229,160,0.6)"></div>Renewable</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(0,128,255,0.4)"></div>Grid</div>
+        </div>
+        <div style="margin-top:1rem; padding-top:1rem; border-top:0.5px solid var(--border); display:flex; justify-content:space-between;">
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">SOLAR TODAY</div>
+            <div style="font-size:18px;font-weight:700;color:var(--accent)">142 kWh</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">GRID USAGE</div>
+            <div style="font-size:18px;font-weight:700;color:var(--accent2)">89 kWh</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--mono)">CO₂ SAVED</div>
+            <div style="font-size:18px;font-weight:700;color:var(--accent)">38 kg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- ROW 4: PARKING + MONITORING CENTERS -->
+    <div class="content-grid">
+      <div class="card animate-in" style="animation-delay:0.45s">
+        <div class="card-header">
+          <div class="card-title">Smart Parking — Live Slots</div>
+          <span class="card-action">View map →</span>
+        </div>
+        <div class="parking-grid" id="parking-grid"></div>
+        <div class="parking-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(0,229,160,0.4);border-radius:3px"></div>Available</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(255,71,87,0.4);border-radius:3px"></div>Occupied</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(255,165,2,0.4);border-radius:3px"></div>Reserved</div>
+        </div>
+      </div>
+ 
+      <div class="card animate-in" style="animation-delay:0.5s">
+        <div class="card-header">
+          <div class="card-title">Monitoring Centres</div>
+          <span class="pill green">3 online</span>
+        </div>
+        <div class="mon-grid">
+          <div class="mon-card">
+            <div class="mon-title" style="color:var(--accent)">MON-1</div>
+            <div class="mon-row">Classrooms <span class="mon-val">4</span></div>
+            <div class="mon-row">Labs <span class="mon-val">2</span></div>
+            <div class="mon-row">Lights <span class="mon-val" style="color:var(--accent)">AUTO</span></div>
+            <div class="mon-row">Temp <span class="mon-val">24°C</span></div>
+            <div class="mon-row">Status <span class="mon-val" style="color:var(--accent)">OK</span></div>
+          </div>
+          <div class="mon-card">
+            <div class="mon-title" style="color:var(--accent2)">MON-2</div>
+            <div class="mon-row">Classrooms <span class="mon-val">3</span></div>
+            <div class="mon-row">Labs <span class="mon-val">3</span></div>
+            <div class="mon-row">Lights <span class="mon-val" style="color:var(--accent)">AUTO</span></div>
+            <div class="mon-row">Temp <span class="mon-val">26°C</span></div>
+            <div class="mon-row">Status <span class="mon-val" style="color:var(--warn)">ALERT</span></div>
+          </div>
+          <div class="mon-card">
+            <div class="mon-title" style="color:var(--accent3)">MON-3</div>
+            <div class="mon-row">Classrooms <span class="mon-val">4</span></div>
+            <div class="mon-row">Labs <span class="mon-val">2</span></div>
+            <div class="mon-row">Lights <span class="mon-val" style="color:var(--accent)">AUTO</span></div>
+            <div class="mon-row">Temp <span class="mon-val">23°C</span></div>
+            <div class="mon-row">Status <span class="mon-val" style="color:var(--accent)">OK</span></div>
+          </div>
+        </div>
+ 
+        <div style="margin-top:1rem;padding-top:1rem;border-top:0.5px solid var(--border);">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">DIRECT SERVICES → SCMS</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span class="pill green">♻️ Renewable</span>
+            <span class="pill blue">🅿️ Parking</span>
+            <span class="pill green">📚 Library</span>
+            <span class="pill green">🔒 Security</span>
+            <span class="pill blue">🏠 Apartments</span>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+  </main>
+</div>
+ 
+<script>
+  let currentRole = 'Admin';
+  function setRole(el, role) {
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentRole = role;
+  }
+ 
+  function doLogin() {
+    const email = document.getElementById('login-email').value;
+    const pass = document.getElementById('login-pass').value;
+    if (!email || !pass) {
+      document.getElementById('login-email').style.borderColor = 'rgba(255,71,87,0.5)';
+      setTimeout(() => document.getElementById('login-email').style.borderColor = '', 1500);
+      return;
+    }
+    const initials = email.slice(0,2).toUpperCase();
+    document.getElementById('user-avatar').textContent = initials;
+    document.getElementById('user-name').textContent = email.split('@')[0];
+    document.getElementById('user-role').textContent = currentRole.toLowerCase() + ' · SCMS';
+ 
+    document.getElementById('login-page').style.opacity = '0';
+    document.getElementById('login-page').style.transform = 'scale(0.97)';
+    document.getElementById('login-page').style.transition = 'all 0.4s ease';
+    setTimeout(() => {
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('dashboard-page').style.display = 'block';
+      showToast();
+    }, 400);
+  }
+ 
+  function showToast() {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+ 
+  function openLogout() {
+    document.getElementById('logout-modal').classList.add('show');
+  }
+  function closeLogout() {
+    document.getElementById('logout-modal').classList.remove('show');
+  }
+  function confirmLogout() {
+    document.getElementById('logout-modal').classList.remove('show');
+    document.getElementById('dashboard-page').style.opacity = '0';
+    document.getElementById('dashboard-page').style.transition = 'opacity 0.4s';
+    setTimeout(() => {
+      document.getElementById('dashboard-page').style.display = 'none';
+      document.getElementById('dashboard-page').style.opacity = '1';
+      const lp = document.getElementById('login-page');
+      lp.style.opacity = '0'; lp.style.transform = 'scale(0.97)'; lp.style.transition = '';
+      lp.style.display = 'flex';
+      setTimeout(() => { lp.style.opacity='1'; lp.style.transform='scale(1)'; lp.style.transition='all 0.4s ease'; }, 50);
+      document.getElementById('login-email').value = '';
+      document.getElementById('login-pass').value = '';
+    }, 400);
+  }
+ 
+  // Live clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      now.toLocaleTimeString('en-IN', { hour12:false });
+  }
+  setInterval(updateClock, 1000); updateClock();
+ 
+  // Energy bars
+  const energyData = [
+    {r:8,g:12,l:'6AM'},{r:18,g:15,l:'8AM'},{r:32,g:28,l:'10AM'},
+    {r:40,g:22,l:'12PM'},{r:35,g:25,l:'2PM'},{r:28,g:20,l:'4PM'},
+    {r:15,g:18,l:'6PM'}
+  ];
+  const maxE = 40;
+  const barsEl = document.getElementById('energy-bars');
+  const labelsEl = document.getElementById('energy-labels');
+  energyData.forEach(d => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText='flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;';
+    const rBar = document.createElement('div');
+    rBar.className='energy-bar renewable';
+    rBar.style.height = Math.round(d.r/maxE*70)+'px';
+    rBar.title = `Renewable: ${d.r} kWh`;
+    const gBar = document.createElement('div');
+    gBar.className='energy-bar conventional';
+    gBar.style.height = Math.round(d.g/maxE*70)+'px';
+    gBar.title = `Grid: ${d.g} kWh`;
+    const label = document.createElement('div');
+    label.className='energy-label'; label.textContent=d.l;
+    wrap.append(rBar,gBar,label);
+    barsEl.appendChild(wrap);
+  });
+ 
+  // Parking slots
+  const slots = [
+    'occupied','occupied','empty','empty','reserved','occupied',
+    'occupied','empty','empty','occupied','occupied','empty',
+    'reserved','occupied','empty','empty','occupied','occupied',
+    'empty','occupied','reserved'
+  ];
+  const pg = document.getElementById('parking-grid');
+  slots.forEach((s,i) => {
+    const el = document.createElement('div');
+    el.className='parking-slot '+s;
+    el.textContent='S'+(i+1);
+    el.title = 'Slot S'+(i+1)+': '+s;
+    pg.appendChild(el);
+  });
+ 
+  // Enter key to login
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') doLogin();
+  });
+</script>
+</body>
+</html>
